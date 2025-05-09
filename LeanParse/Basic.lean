@@ -43,10 +43,9 @@ def parseHexLitTerm : Parser Terminal := do
 def parseIntTerm : Parser Terminal := do
   if (← peek!) == '-' then
     skip
-    let r ← parseHexLitTerm <|> parseIntLitTerm
-    match r with
+    match ← parseHexLitTerm <|> parseIntLitTerm with
     | int v => return int (-v)
-    | _ => panic! "-- unreachable --"
+    | _     => unreachable!
   else
     return ← attempt parseHexLitTerm <|> parseIntLitTerm
 
