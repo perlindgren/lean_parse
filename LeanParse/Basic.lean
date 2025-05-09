@@ -59,12 +59,12 @@ def parseIntTerm : Parser Terminal := do
 
 @[inline]
 def parseIdTerm : Parser Terminal := do
-  let s ← many1 (asciiLetter <|> digit <|> pchar '_')
-  return id (String.mk (s.toList))
+  let h ← asciiLetter <|> pchar '_'
+  let t ← many (asciiLetter <|> digit <|> pchar '_')
+  return id (String.mk ([h] ++ (t.toList)))
 
 #eval (parseIdTerm.run "abc")   -- id "abc"
-#eval (parseIdTerm.run "7abc")  -- id "7abc"
--- Note, the order of combinators ensures "7abc" not to happen
+#eval (parseIdTerm.run "7abc")  -- expected _, not great
 #eval (parseIdTerm.run "=")     -- expected _, not great
 
 @[inline]
@@ -75,7 +75,8 @@ def parseTerm : Parser Terminal := do
 #eval (parseTerm.run "0x17")      -- int 23
 #eval (parseIntTerm.run "-7")     -- int -7
 #eval (parseIntTerm.run "-0x10")  -- int -16
-#eval (parseTerm.run "0xq")       -- int 0, "xq" will be caught later !!!!
+#eval (parseTerm.run "0xq")       -- int 0, "xq" will be caught later
+#eval (parseTerm.run "7abc")      -- int 7, "abc" will be caught later
 #eval (parseTerm.run "abc")       -- id "abc"
 #eval (parseTerm.run "abc7")      -- id "abc7"
 #eval (parseTerm.run "ab_c7")     -- id "ab_c7"
