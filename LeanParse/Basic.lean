@@ -14,8 +14,9 @@ def parseIntLitTerm : Parser Terminal := do
   return int (← digits)
 
 -- test IntLitTerm
-#eval (parseIntLitTerm.run "78") -- 78
-#eval (parseIntLitTerm.run "-3") -- expected digit
+#eval (parseIntLitTerm.run "78")   -- 78
+#eval (parseIntLitTerm.run "-3")   -- error expected digit
+#eval (parseIntLitTerm.run "0xq")  -- int 0, "xq" will be caught later
 
 @[inline]
 def parseHexLitTerm : Parser Terminal := do
@@ -35,7 +36,26 @@ def parseHexLitTerm : Parser Terminal := do
 #eval (parseHexLitTerm.run "0xc")
 #eval (parseHexLitTerm.run "0xF")
 #eval (parseHexLitTerm.run "0x10")
-#eval (parseHexLitTerm.run "x10") -- expected 0x
+#eval (parseHexLitTerm.run "x10") -- error. expected 0x
+#eval (parseHexLitTerm.run "0xq") -- error. hex digit expected
+
+@[inline]
+def parseIntTerm : Parser Terminal := do
+  if (← peek!) == '-' then
+    skip
+    let r ← parseHexLitTerm <|> parseIntLitTerm
+    match r with
+    | int v => return int (-v)
+    | _ => panic! "-- unreachable --"
+  else
+    return ← attempt parseHexLitTerm <|> parseIntLitTerm
+
+#eval (parseIntTerm.run "0")
+#eval (parseIntTerm.run "0x7")
+#eval (parseIntTerm.run "-7")
+#eval (parseIntTerm.run "-0x10")
+#eval (parseIntTerm.run "0xq")   -- int 0, "xq" will be caught later
+
 
 @[inline]
 def parseIdTerm : Parser Terminal := do
@@ -49,13 +69,15 @@ def parseIdTerm : Parser Terminal := do
 
 @[inline]
 def parseTerm : Parser Terminal := do
-  return ← (attempt parseHexLitTerm <|> parseIntLitTerm <|> parseIdTerm)
+  return ← (attempt parseIntTerm <|> parseIdTerm)
 
-#eval (parseTerm.run "7")     -- int 7
-#eval (parseTerm.run "0x17")  -- int 23
-#eval (parseTerm.run "0xq")   -- int 0, "xq" will be caught later
-#eval (parseTerm.run "abc")   -- id "abc"
-#eval (parseTerm.run "abc7")  -- id "abc7"
-#eval (parseTerm.run "ab_c7") -- id "ab_c7"
-#eval (parseTerm.run "_abc7") -- id "_abc7"
-#eval (parseIdTerm.run "=")   -- expected _, not great
+#eval (parseTerm.run "7")         -- int 7
+#eval (parseTerm.run "0x17")      -- int 23
+#eval (parseIntTerm.run "-7")     -- int -7
+#eval (parseIntTerm.run "-0x10")  -- int -16
+#eval (parseTerm.run "0xq")       -- int 0, "xq" will be caught later !!!!
+#eval (parseTerm.run "abc")       -- id "abc"
+#eval (parseTerm.run "abc7")      -- id "abc7"
+#eval (parseTerm.run "ab_c7")     -- id "ab_c7"
+#eval (parseTerm.run "_abc7")     -- id "_abc7"
+#eval (parseIdTerm.run "=")       -- expected _, not great
