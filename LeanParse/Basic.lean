@@ -45,7 +45,7 @@ def parseIdTerm : Parser Terminal := do
 #eval (parseIdTerm.run "abc")   -- id "abc"
 #eval (parseIdTerm.run "7abc")  -- id "7abc"
 -- Note, the order of combinators ensures "7abc" not to happen
-#eval (parseIdTerm.run "=")     -- expected _
+#eval (parseIdTerm.run "=")     -- expected _, not great
 
 @[inline]
 def parseTerm : Parser Terminal := do
@@ -58,3 +58,4 @@ def parseTerm : Parser Terminal := do
 #eval (parseTerm.run "abc7")  -- id "abc7"
 #eval (parseTerm.run "ab_c7") -- id "ab_c7"
 #eval (parseTerm.run "_abc7") -- id "_abc7"
+#eval (parseIdTerm.run "=")   -- expected _, not great
