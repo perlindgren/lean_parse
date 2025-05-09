@@ -61,7 +61,7 @@ def parseIntTerm : Parser Terminal := do
 def parseIdTerm : Parser Terminal := do
   let h ← asciiLetter <|> pchar '_'
   let t ← many (asciiLetter <|> digit <|> pchar '_')
-  return id (String.mk ([h] ++ (t.toList)))
+  return id (String.mk ([h] ++ t.toList))
 
 #eval (parseIdTerm.run "abc")   -- id "abc"
 #eval (parseIdTerm.run "7abc")  -- expected _, not great
